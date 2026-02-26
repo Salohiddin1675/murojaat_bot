@@ -1,0 +1,62 @@
+import asyncio
+from aiogram import Bot, Dispatcher, types
+
+# Tokeningizni shu yerga qo'ying (yangilangan xavfsiz token)
+TOKEN = "BU_YERGA_YANGI_TOKEN"
+
+bot = Bot(token=TOKEN)
+dp = Dispatcher()
+
+ADMINS = {
+    "📩 Mahalla raisga murojaat": 7474628933,
+    "💰 Soliq inspektoriga": 7474628933,
+    "👨‍🎓 Yoshlar yetakchisiga": 7474628933,
+    "👮 Inspektorga": 7474628933,
+    "🤝 Ijtimoiy xodimga": 7474628933,
+    "🏛 Hokim yordamchisiga": 7474628933,
+    "👩 Xotin-qizlar raisiga": 7474628933,
+}
+
+user_state = {}
+
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+
+menu = ReplyKeyboardMarkup(
+    keyboard=[[KeyboardButton(text=k)] for k in ADMINS.keys()],
+    resize_keyboard=True
+)
+
+@dp.message(commands=["start"])
+async def start(message: types.Message):
+    await message.answer("Bo‘limni tanlang:", reply_markup=menu)
+
+@dp.message()
+async def handle(message: types.Message):
+    user_id = message.from_user.id
+    text = message.text
+
+    if text in ADMINS:
+        user_state[user_id] = text
+        await message.answer("Murojaatingizni yozing:")
+        return
+
+    if user_id in user_state:
+        category = user_state[user_id]
+        admin_id = ADMINS[category]
+
+        await bot.send_message(
+            admin_id,
+            f"📨 Yangi murojaat!\n\n"
+            f"Bo‘lim: {category}\n"
+            f"Foydalanuvchi ID: {user_id}\n\n"
+            f"Xabar:\n{text}"
+        )
+
+        await message.answer("✅ Murojaatingiz yuborildi!")
+        del user_state[user_id]
+
+async def main():
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
